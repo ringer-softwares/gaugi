@@ -11,9 +11,9 @@ class EventContext( Logger ):
   def __init__(self, t):
     Logger.__init__(self)
     self._containers = collections.OrderedDict()
-    self._tree=NotSet
+    self._tree=None
     self._decorations = dict()
-    self._current_entry=NotSet
+    self._current_entry=None
     self._tree = t
 
 

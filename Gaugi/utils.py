@@ -1,5 +1,7 @@
 #coding: utf-8
-__all__ = []
+__all__ = ['expand_folders', 'ensure_extension', 'check_extension',
+           'mkdir_p', 'progressbar', 'list2stdvector', 'stdvector2list',
+           'load', 'save']
 
 
 import numpy as np
@@ -13,9 +15,14 @@ import shutil
 import signal
 import inspect
 import numpy as np
-from Gaugi import RCM_NO_COLOR, RCM_GRID_ENV
+
+from tqdm import tqdm
 from time import sleep, time
 
+try:
+  basestring
+except NameError:
+  basestring = str
 
 
 def expand_path(path):
@@ -29,7 +36,7 @@ def expand_path(path):
 
 
 
-def expand_folders( pathList, filters = None, logger = None, level = None):
+def expand_folders( pathList, filters = None):
   """
     Expand all folders to the contained files using the filters on pathList
 
@@ -55,9 +62,7 @@ def expand_folders( pathList, filters = None, logger = None, level = None):
   retList = [[] for idx in range(len(filters))]
   from Gaugi.utils import progressbar, traverse
   pathList = list(traverse([glob(path) if '*' in path else path for path in traverse(pathList,simple_ret=True)],simple_ret=True))
-  for path in progressbar( pathList, len(pathList), 'Expanding folders: ', 60, 50,
-                           True if logger is not None else False, logger = logger,
-                           level = level):
+  for path in progressbar( pathList , prefix = 'Expanding folders: ', mute = True):
     path = expand_path( path )
     if not os.path.exists( path ):
       raise ValueError("Cannot reach path '%s'" % path )
@@ -105,9 +110,9 @@ def mkdir_p(path):
 
 
 def save( d, filename, protocol='savez_compressed', allow_pickle=True):
-  if prototol == 'savez_compressed':
+  if protocol == 'savez_compressed':
     np.savez(ensure_extension(filename, 'npz') , **d, protocol = 'savez_compressed', allow_pickle=allow_pickle)
-  elif prototol == 'savez':
+  elif protocol == 'savez':
     f = gzip.GzipFile(ensure_extension(filename, 'pic.gz'), 'wb')
     cPickle.dump( d, f )
     f.close()
@@ -130,14 +135,6 @@ def load( filename, allow_pickle = True ):
 
 
 
-def get_property( kw, key, default = None ):
-  """
-  Use together with None to have only one default value for your job
-  properties.
-  """
-  if not key in kw or kw[key] is None:
-    kw[key] = default
-  return kw.pop(key)
 
 
 def check_for_unused_vars(d, fcn = None):
@@ -155,132 +152,8 @@ def check_for_unused_vars(d, fcn = None):
 
 
 
-def progressbar(it, count ,prefix="", size=60, step=1, disp=True, logger = None, level = None,
-                no_bl = RCM_GRID_ENV or sys.stdout.isatty(), 
-                measureTime = True):
-  """
-    Display progressbar.
-
-    Input arguments:
-    -> it: the iterations collection;
-    -> count: total number of iterations on collection;
-    -> prefix: the strings preceding the progressbar;
-    -> size: number of chars to use on the progressbar;
-    -> step: the number of iterations needed for updating;
-    -> disp: whether to display progressbar or not;
-    -> logger: use this logger object instead o sys.stdout;
-    -> level: the output level used on logger;
-    -> no_bl: whether to show messages without breaking lines;
-    -> measureTime: display time measurement when completing progressbar task.
-  """
-  from Gaugi import LoggingLevel
-  from logging import StreamHandler
-  from Gaugi.Logger import nlStatus, resetNlStatus, MyStreamHandler
-  import sys
-  if level is None: level = LoggingLevel.INFO
-  def _show(_i):
-    x = int(size*_i/count) if count else 0
-    if _i % (step if step else 1): return
-    if logger:
-      if logger.isEnabledFor(level):
-        try:
-          fn, lno, func = logger.findCaller() 
-        except:
-          fn, lno, func, _ = logger.findCaller() 
-
-        record = logger.makeRecord(logger.name, level, fn, lno, 
-                                   "%s|%s%s| %i/%i\r",
-                                   (prefix, "#"*x, "-"*(size-x), _i, count,), 
-                                   None, 
-                                   func=func)
-        record.nl = False
-        # emit message
-        logger.handle(record)
-    else:
-      sys.stdout.write("%s|%s%s| %i/%i\r" % (prefix, "#"*x, "-"*(size-x), _i, count))
-      sys.stdout.flush()
-
-
-
-  # end of (_show)
-  # prepare for looping:
-  try:
-    if disp:
-      if measureTime:
-        from time import time
-        start = time()
-      # override emit to emit_no_nl
-      if logger:
-        if not nlStatus(): 
-          sys.stdout.write("\n")
-          sys.stdout.flush()
-        if no_bl:
-          prev_emit = []
-          # TODO On python3, all we need to do is to change the Handler.terminator
-          for handler in logger.handlers:
-            if type(handler) is StreamHandler:
-              stream = MyStreamHandler( handler )
-              prev_emit.append( handler.emit )
-              setattr(handler, StreamHandler.emit.__name__, stream.emit_no_nl)
-      _show(0)
-    # end of (looping preparation)
-    # loop
-    try:
-      for i, item in enumerate(it):
-        yield item
-        if disp: _show(i+1)
-    except GeneratorExit:
-      pass
-    # end of (looping)
-    # final treatments
-    step = 1 # Make sure we always display last printing
-    if disp:
-      if measureTime:
-        end = time()
-      if logger:
-        if no_bl:
-          # override back
-          for handler in logger.handlers:
-            if type(handler) is StreamHandler:
-              setattr( handler, StreamHandler.emit.__name__, prev_emit.pop() )
-          _show(i+1)
-        if measureTime:
-          logger.log( level, "%s... finished task in %3fs.", prefix, end - start )
-        if no_bl:
-          resetNlStatus()
-      else:
-        if measureTime:
-          sys.stdout.write("\n%s... finished task in %3fs.\n" % ( prefix, end - start) )
-        else:
-          sys.stdout.write("\n" )
-        sys.stdout.flush()
-  except (BaseException) as e:
-    import traceback
-    print (traceback.format_exc())
-    step = 1 # Make sure we always display last printing
-    if disp:
-      if logger:
-        # override back
-        if no_bl:
-          for handler in logger.handlers:
-            if type(handler) is StreamHandler:
-              try:
-                setattr( handler, StreamHandler.emit.__name__, prev_emit.pop() )
-              except IndexError:
-                pass
-        try:
-          _show(i+1)
-        except NameError:
-          _show(0)
-        for handler in logger.handlers:
-          if type(handler) is StreamHandler:
-            handler.stream.flush()
-      else:
-        sys.stdout.write("\n")
-        sys.stdout.flush()
-    # re-raise:
-    raise e
-  # end of (final treatments)
+def progressbar(it, prefix="", mute=False ):
+  return it if mute else tqdm(it, desc = prefix )
 
 
 

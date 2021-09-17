@@ -4,7 +4,7 @@ __all__ = ['StoreGate','restoreStoreGate']
 
 
 from Gaugi import Logger, LoggingLevel
-from Gaugi.utils import get_property
+from Gaugi import get_property
 from Gaugi.utils import expand_path
 from Gaugi.utils import ensure_extension
 

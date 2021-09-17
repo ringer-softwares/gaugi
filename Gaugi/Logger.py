@@ -2,6 +2,8 @@
 __all__ = ["LoggingLevel", "Logger"]
 
 import logging
+from Gaugi import EnumStringification
+
 
 # This won't handle print and sys.stdout, but most of the cases are handled.
 _nl = True
@@ -14,7 +16,7 @@ def resetNlStatus():
   global _nl
   _nl = True
 
-class LoggingLevel:
+class LoggingLevel(EnumStringification):
   """
     A wrapper for logging levels, which allows stringification of known log
     levels.
@@ -177,7 +179,7 @@ class Logger( object ):
     raise AttributeError( 'AttributeError was raised inside an instance of Logger class while attempting to get: %s' % attr )
 
   
-
+  @classmethod
   def getModuleLogger(cls, logName, logDefaultLevel = LoggingLevel.INFO):
     """
       Retrieve logging stream handler using logName and add a handler
@@ -205,67 +207,3 @@ class Logger( object ):
 
 
 
-
-
-class MyStreamHandler( logging.StreamHandler ):
-  """
-  Just in case we need a bounded method for emiting without newlines.
-  """
-
-  def __init__(self, handler):
-    """
-    Copy ctor
-    """
-    logging.StreamHandler.__init__(self)
-    self._name = handler._name
-    self.level = handler.level
-    self.formatter = handler.formatter
-    self.stream = handler.stream
-    # We use stream as carrier b/c other handlers may complicate things
-
-  def emit_no_nl(self, record):
-    """
-    Monkey patching to emit a record without newline.
-    """
-    #print '\n record', record
-    #print '\n record.__dict__', record.__dict__
-    try:
-      nl = record.nl
-    except AttributeError:
-      nl = True
-    try:
-      msg = self.format(record)
-      stream = self.stream
-      global _nl
-      fs = ''
-      if nl and not _nl:
-        fs += '\n'
-      _nl = nl
-      fs += '%s'
-      if nl: fs += '\n'
-      if not logging._unicode: #if no unicode support...
-        stream.write(fs % msg)
-      else:
-        try:
-          if (isinstance(msg, unicode) and
-            getattr(stream, 'encoding', None)):
-            ufs = unicode(fs)
-            try:
-              stream.write(ufs % msg)
-            except UnicodeEncodeError:
-              #Printing to terminals sometimes fails. For example,
-              #with an encoding of 'cp1251', the above write will
-              #work if written to a stream opened or wrapped by
-              #the codecs module, but fail when writing to a
-              #terminal even when the codepage is set to cp1251.
-              #An extra encoding step seems to be needed.
-              stream.write((ufs % msg).encode(stream.encoding))
-          else:
-            stream.write(fs % msg)
-        except UnicodeError:
-          stream.write(fs % msg.encode("UTF-8"))
-      self.flush()
-    except (KeyboardInterrupt, SystemExit):
-      raise
-    except:
-      self.handleError(record)

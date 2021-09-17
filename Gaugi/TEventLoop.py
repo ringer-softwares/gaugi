@@ -2,7 +2,7 @@
 __all__ = ['TEventLoop']
 
 from Gaugi        import Logger, LoggingLevel
-from Gaugi.utils  import get_property
+from Gaugi        import get_property
 from Gaugi.utils  import expand_folders
 from Gaugi.utils  import progressbar
 from Gaugi.macros import *
@@ -19,8 +19,8 @@ class TEventLoop( Logger ):
     Logger.__init__(self, **kw)
     fList            = get_property( kw, 'inputFiles', []                              )
     self._ofile      = get_property( kw, 'outputFile', "histos.root"                   )
-    self._treePath   = get_property( kw, 'treePath'  , NotSet                          )
-    self._dataframe  = get_property( kw, 'dataframe' , NotSet                          )
+    self._treePath   = get_property( kw, 'treePath'  , None                            )
+    self._dataframe  = get_property( kw, 'dataframe' , None                            )
     self._nov        = get_property( kw, 'nov'       , -1                              )
     self._mute_progressbar   = get_property( kw, 'mute_progressbar', False             )
     self._level = LoggingLevel.retrieve( get_property(kw, 'level', LoggingLevel.INFO ) )
@@ -38,10 +38,10 @@ class TEventLoop( Logger ):
 
     self._containersSvc  = collections.OrderedDict() # container dict to hold all EDMs
     self._storegateSvc = None # storegate service to hold all hists
-    self._t = NotSet # TChain used to hold the ttree files
-    self._event = NotSet # TEvent schemma used to read the ttree
-    self._entries = NotSet # total number of event inside of the ttree
-    self._context = NotSet # Hold the event context
+    self._t = None # TChain used to hold the ttree files
+    self._event = None # TEvent schemma used to read the ttree
+    self._entries = None # total number of event inside of the ttree
+    self._context = None # Hold the event context
 
     # Use this to hold the fist good
     self._metadataInputFile = None
@@ -59,7 +59,7 @@ class TEventLoop( Logger ):
     import ROOT
     ### Prepare to loop:
     self._t = ROOT.TChain()
-    for inputFile in progressbar(self._fList, len(self._fList), prefix= "Creating collection tree ", logger=self._logger):
+    for inputFile in progressbar(self._fList, prefix= "Creating collection tree " ):
       # Check if file exists
       self._f  = ROOT.TFile.Open(inputFile, 'read')
       if not self._f or self._f.IsZombie():
@@ -121,18 +121,13 @@ class TEventLoop( Logger ):
   def execute( self ):
     # retrieve values
     entries = self.getEntries()
+    if self.nov < entries:
+      entries = nov
+
     ### Loop over events
-    if not self._mute_progressbar:
-      step = int(entries/100) if int(entries/100) > 0 else 1
-      for entry in progressbar(range(self._entries), entries, step=step, prefix= "Looping over entries ", logger=self._logger):
-        if self.nov < entry:
-          break
-        self.process(entry)
-    else:
-      for entry in range(self._entries):
-        if self.nov < entry:
-          break
-        self.process(entry)
+    for entry in progressbar(range(entries), prefix= "Looping over entries ", mute=self._mute_progressbar):
+      self.process(entry)
+
     return StatusCode.SUCCESS
 
 

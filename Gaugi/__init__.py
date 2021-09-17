@@ -17,8 +17,8 @@ except NameError:
   basestring = str
 
 import os, multiprocessing
-RCM_GRID_ENV = int(os.environ.get('RCM_GRID_ENV',0))
-RCM_NO_COLOR = int(os.environ.get('RCM_NO_COLOR',1))
+RCM_GRID_ENV = 0 #int(os.environ.get('RCM_GRID_ENV',0))
+RCM_NO_COLOR = 0 #int(os.environ.get('RCM_NO_COLOR',1))
 OMP_NUM_THREADS = int(os.environ.get('OMP_NUM_THREADS',multiprocessing.cpu_count()))
 
 
@@ -32,13 +32,19 @@ from . import StatusCode
 __all__.extend(StatusCode.__all__)
 from .StatusCode import *
 
+from . import enumerators
+__all__.extend(enumerators.__all__)
+from .enumerators import *
+
 from . import Logger
 __all__.extend(Logger.__all__)
 from .Logger import *
 
-from . import enumerators
-__all__.extend(enumerators.__all__)
-from .enumerators import *
+from . import Property
+__all__.extend(Property.__all__)
+from .Property import *
+
+
 
 from . import parallel
 __all__.extend(parallel.__all__)
