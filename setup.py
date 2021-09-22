@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
   name = 'Gaugi',
-  version = '1.0.00',
+  version = '3.0.0',
   license='GPL-3.0',
   description = '',
   long_description = long_description,
