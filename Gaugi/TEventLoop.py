@@ -119,13 +119,9 @@ class TEventLoop( Logger ):
 
 
   def execute( self ):
-    # retrieve values
-    entries = self.getEntries()
-    if self.nov < entries:
-      entries = nov
 
     ### Loop over events
-    for entry in progressbar(range(entries), prefix= "Looping over entries ", mute=self._mute_progressbar):
+    for entry in progressbar(range(self.get_nov()), prefix= "Looping over entries ", mute=self._mute_progressbar):
       self.process(entry)
 
     return StatusCode.SUCCESS
@@ -202,9 +198,8 @@ class TEventLoop( Logger ):
 
 
   # number of event
-  @property
-  def nov(self):
-    if self._nov < 0:
+  def get_nov(self):
+    if self._nov < 0 or self._nov > self.getEntries():
       return self.getEntries()
     else:
       return self._nov

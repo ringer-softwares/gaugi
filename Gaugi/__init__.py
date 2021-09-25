@@ -44,11 +44,9 @@ from . import Property
 __all__.extend(Property.__all__)
 from .Property import *
 
-
-
-from . import parallel
-__all__.extend(parallel.__all__)
-from .parallel import *
+from . import MultiProcessing
+__all__.extend(MultiProcessing.__all__)
+from .MultiProcessing import *
 
 from . import constants
 __all__.extend(constants.__all__)

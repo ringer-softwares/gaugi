@@ -84,6 +84,9 @@ def expand_folders( pathList, filters = None):
           retList[idx].append( path )
   if len(filters) is 1:
     retList = retList[0]
+
+
+  sorted(retList)
   return retList
 
 
