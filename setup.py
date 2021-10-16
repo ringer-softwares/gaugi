@@ -12,7 +12,7 @@ setuptools.setup(
   long_description_content_type="text/markdown",
   packages=setuptools.find_packages(),
   author = 'João Victor da Fonseca Pinto',
-  author_email = 'jodafons@lps.ufrj.br or jodafons@cern.ch',
+  author_email = 'jodafons@lps.ufrj.br,jodafons@cern.ch',
   url = 'https://github.com/ringer-softwares/gaugi',
   keywords = ['framework', 'threading', 'shared resources', 'flexibility', 'python', 'online'],
   install_requires=[
