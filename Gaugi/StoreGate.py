@@ -4,12 +4,15 @@ __all__ = ['StoreGate','restoreStoreGate']
 
 
 from Gaugi import Logger, LoggingLevel
+from Gaugi.macros import *
 from Gaugi import get_property
 from Gaugi.utils import expand_path
 from Gaugi.utils import ensure_extension
 
 from ROOT import TFile
 import numpy as np
+import os.path
+import gc
 
 
 #
@@ -20,53 +23,48 @@ class StoreGate( Logger ) :
   #
   # Constructor
   #
-  def __init__( self, outputFile, **kw ):
+  def __init__( self, outputFile, restore=False ):
 
     Logger.__init__(self)
 
     outputFile = ensure_extension(outputFile,'root')
-    self._restoreStoreGate = get_property(kw,'restoreStoreGate',False)
-    filterDirs             = get_property(kw,'filterDirs', None)
-    
-    self._outputFile = expand_path( outputFile )
+    self.__outputFile = expand_path( outputFile )
 
-    if self._restoreStoreGate:
-      import os.path
-      if not os.path.exists( outputFile ):
-        raise ValueError("File '%s' does not exist" % outputFile)
-      self._file = TFile( outputFile, "read")
+    if restore:
+      if not os.path.exists( self.__outputFile ):
+        raise ValueError("File '%s' does not exist" % self.__outputFile)
+      self.__file = TFile( self.__outputFile, "read")
     else:
-      self._file = TFile( outputFile, "recreate")
-    
-    self._currentDir = ""
-    self._objects    = dict()
-    self._dirs       = list()
+      self.__file = TFile( self.__outputFile, "recreate")
+    self.__currentDir = ""
+    self.__objects    = dict()
+    self.__dirs       = list()
 
-    if self._restoreStoreGate:
-      retrievedObjs = self.__restore(self._file, filterDirs=filterDirs)
-      for name, obj in retrievedObjs:
-        self._dirs.append(name)
-        self._objects[name]=obj
+    if restore:
+      objs = self.restore(self.__ile)
+      for name, obj in objs:
+        self.__dirs.append(name)
+        self.__objects[name]=obj
 
-
+  #
+  # Get the stored file path
+  #
   def local(self):
-    return self._outputFile
+    return self.__outputFile
 
 
   #
   # Save objects and delete storegate
   #
   def __del__(self):
-    self._dirs = None
-    self._objects = None
-    import gc
+    self.__dirs = None
+    self.__objects = None
     gc.collect()
-    if not self._restoreStoreGate:
-      self._file.Close()
+    self.__file.Close()
 
 
   def write(self):
-    self._file.Write()
+    self.__file.Write()
 
   #
   # Create a folder
@@ -74,47 +72,50 @@ class StoreGate( Logger ) :
   def mkdir(self, theDir):
     fullpath = (theDir).replace('//','/')    
     if not fullpath in self._dirs:
-      self._dirs.append( fullpath )
-      self._file.mkdir(fullpath)
-      self._file.cd(fullpath)
-      self._currentDir = fullpath
-      self._logger.verbose('Created directory with name %s', theDir)
+      self.__dirs.append( fullpath )
+      self.__file.mkdir(fullpath)
+      self.__file.cd(fullpath)
+      self.__currentDir = fullpath
+      MSG_DEBUG(self, 'Created directory with name %s', theDir)
 
   #
   # Go to the pointed directory
   #
   def cd(self, theDir):
-    self._currentDir = ''
-    self._file.cd()
+
+    self.__currentDir = ''
+    self.__file.cd()
     fullpath = (theDir).replace('//','/')
-    if fullpath in self._dirs:
-      self._currentDir = fullpath
-      if self._file.cd(fullpath):
+    if fullpath in self.__dirs:
+      self.__currentDir = fullpath
+      if self.__file.cd(fullpath):
         return True
-    self._logger.error("Couldn't cd to folder %s", fullpath)
+    MSG_ERROR(self , "Couldn't cd to folder %s", fullpath)
     return False
 
 
   def addHistogram( self, obj ):
+
     feature = obj.GetName()
-    fullpath = (self._currentDir + '/' + feature).replace('//','/')
+    fullpath = (self.__currentDir + '/' + feature).replace('//','/')
     if not fullpath.startswith('/'):
       fullpath='/'+fullpath
-    if not fullpath in self._dirs:
-      self._dirs.append(fullpath)
-      self._objects[fullpath] = obj
+    if not fullpath in self.__dirs:
+      self.__dirs.append(fullpath)
+      self.__objects[fullpath] = obj
       #obj.Write()
       MSG_DEBUG(self, 'Saving object type %s into %s',type(obj), fullpath)
 
 
   def addObject( self, obj ):
+
     feature = obj.GetName()
-    fullpath = (self._currentDir + '/' + feature).replace('//','/')
+    fullpath = (self.__currentDir + '/' + feature).replace('//','/')
     if not fullpath.startswith('/'):
       fullpath='/'+fullpath
-    if not fullpath in self._dirs:
-      self._dirs.append(fullpath)
-      self._objects[fullpath] = obj
+    if not fullpath in self.__dirs:
+      self.__dirs.append(fullpath)
+      self.__objects[fullpath] = obj
       obj.Write()
       MSG_DEBUG(self, 'Saving object type %s into %s',type(obj), fullpath)
 
@@ -123,8 +124,8 @@ class StoreGate( Logger ) :
     fullpath = (feature).replace('//','/')
     if not fullpath.startswith('/'):
       fullpath='/'+fullpath
-    if fullpath in self._dirs:
-      obj = self._objects[fullpath]
+    if fullpath in self.__dirs:
+      obj = self.__objects[fullpath]
       #self._logger.verbose('Retrieving object type %s into %s',type(obj), fullpath)
       return obj
     else:
@@ -133,7 +134,7 @@ class StoreGate( Logger ) :
 
 
   def getDir(self, path):
-    return self._file.GetDirectory(path)
+    return self.__file.GetDirectory(path)
 
   #
   # Use this to set labels into the histogram
@@ -154,36 +155,22 @@ class StoreGate( Logger ) :
 
 
   def collect(self):
-    self._objects.clear()
-    self._dirs = list()
+    self.__objects.clear()
+    self.__dirs = list()
 
 
   def getObjects(self):
-    return self._objects
+    return self.__objects
 
 
   def getDirs(self):
-    return self._dirs
+    return self.__dirs
 
 
-  def merge(self, sg):
-    if isinstance(sg, StoreGate):
-      sg = [sg]
-    if isinstance(sg, (list,tuple)):
-      sg = StoreGateCollection(sg)
-    if not isinstance(sg, StoreGateCollection):
-      raise TypeError(type(sg))
-    from ROOT import TH1, TH2
-    for s in sg:
-      for path, obj in s.getObjects().iteritems():
-        if isinstance(obj, (TH1,TH2)):
-          if path in self._objects:
-            mobj = self.histogram(path)  
-            if mobj: mobj.Add( obj )
-
-
+  #
   # Use this method to retrieve the dirname and root object
-  def __restore(self,d, basepath="/", filterDirs=None):
+  #
+  def restore(self,d, basepath="/", filterDirs=None):
     """
     Generator function to recurse into a ROOT file/dir and yield (path, obj) pairs
     Taken from: https://root.cern.ch/phpBB3/viewtopic.php?t=11049
@@ -206,6 +193,6 @@ class StoreGate( Logger ) :
 # helper function to retrieve the storegate using
 # a root file as base.
 def restoreStoreGate( ifile ):
-  return StoreGate( ifile, restoreStoreGate=True )
+  return StoreGate( ifile, restore=True )
 
 

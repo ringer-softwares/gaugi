@@ -3,20 +3,23 @@
 __all__ = ["declareProperty", "get_property"]
 
 
-def declareProperty( self, kw, key, value):
-    if not key in kw or kw[key] is None:
-        setattr(self, key, value)
+def declareProperty( self, kw, name, value, private=False, protected=False):
+    # private
+    atribute = ('__' + name ) if private else name
+    # protected
+    atribute = ('_' + name ) if protected else name
+    if not name in kw:
+        setattr(self, attribute, value)
     else:
-        setattr(self, key, kw[key])
-        kw.pop(key)
+        setattr(self, attribute, kw[name])
 
 
 
-def get_property( kw, key, default = None ):
+def get_property( kw, name, value = None ):
   """
   Use together with None to have only one default value for your job
   properties.
   """
-  if not key in kw or kw[key] is None:
-    kw[key] = default
-  return kw.pop(key)
+  if not name in kw:
+    kw[name] = value
+  return kw[name]

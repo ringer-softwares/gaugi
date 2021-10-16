@@ -5,21 +5,22 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
   name = 'Gaugi',
-  version = '3.0.2',
+  version = '3.0.4',
   license='GPL-3.0',
   description = '',
   long_description = long_description,
   long_description_content_type="text/markdown",
   packages=setuptools.find_packages(),
-  author = 'Gabriel Gazola Milan, João Victor da Fonseca Pinto, Micael Veríssimo de Araújo',
-  author_email = 'gabriel.gazola@poli.ufrj.br, jodafons@lps.ufrj.br, micael.verissimo@lps.ufrj.br',
-  url = 'https://github.com/jodafons/Gaugi',
+  author = 'João Victor da Fonseca Pinto',
+  author_email = 'jodafons@lps.ufrj.br or jodafons@cern.ch',
+  url = 'https://github.com/ringer-softwares/gaugi',
   keywords = ['framework', 'threading', 'shared resources', 'flexibility', 'python', 'online'],
   install_requires=[
           'numpy',
           'six',
           'scipy',
-          'future'
+          'future',
+          'tqdm',
       ],
   classifiers=[
     'Development Status :: 4 - Beta',
