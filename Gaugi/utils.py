@@ -130,7 +130,10 @@ def load( filename, allow_pickle = True ):
   if check_extension(filename, 'npz'):
     return dict(np.load(filename, allow_pickle=allow_pickle))
   elif check_extension(filename, 'pic.gz'):
-    return None
+    f = gzip.GzipFile(filename, 'rb')
+    o = cPickle.load(f)
+    f.close()
+    return o
   elif check_extension(filename, 'pic'):
     return None
   else:

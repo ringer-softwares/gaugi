@@ -109,7 +109,7 @@ class TEventLoop( Logger ):
     if not self._storegateSvc:
       MSG_INFO( self, "Creating StoreGate...")
       from Gaugi import StoreGate
-      self._storegateSvc = StoreGate( self._ofile , level = self._level)
+      self._storegateSvc = StoreGate( self._ofile )
     else:
       MSG_INFO( self, 'The StoraGate was created for ohter service. Using the service setted by client.')
     

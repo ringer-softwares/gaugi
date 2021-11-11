@@ -5,9 +5,9 @@ __all__ = ["declareProperty", "get_property"]
 
 def declareProperty( self, kw, name, value, private=False, protected=False):
     # private
-    atribute = ('__' + name ) if private else name
+    attribute = ('__' + name ) if private else name
     # protected
-    atribute = ('_' + name ) if protected else name
+    attribute = ('_' + name ) if protected else name
     if not name in kw:
         setattr(self, attribute, value)
     else:
