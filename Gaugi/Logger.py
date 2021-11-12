@@ -145,7 +145,6 @@ def _getConsoleHandler():
   ch.setFormatter(_getFormatter())
   return ch
 
-print('aki joao')
 console = _getConsoleHandler()
 
 
@@ -160,8 +159,6 @@ class Logger( object ):
     """
       Retrieve from args the logger, or create it using default configuration.
     """
-    print('------------------------')
-    #print(console)
 
     
     #if 'level' in d:
@@ -172,7 +169,7 @@ class Logger( object ):
     #else:
     self.level = LoggingLevel.INFO
     self._logger = self.getModuleLogger( self.__class__.__name__, self.getLevel() )
-    #self._logger.verbose('Initialiazing %s', self.__class__.__name__)
+    self._logger.verbose('Initialiazing %s', self.__class__.__name__)
 
  
   def __getattr__(self, attr):
@@ -183,7 +180,7 @@ class Logger( object ):
     raise AttributeError( 'AttributeError was raised inside an instance of Logger class while attempting to get: %s' % attr )
 
   
-  #@classmethod
+  @classmethod
   def getModuleLogger(cls, logName, logDefaultLevel = LoggingLevel.INFO):
     """
       Retrieve logging stream handler using logName and add a handler
