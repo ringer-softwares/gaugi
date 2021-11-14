@@ -96,7 +96,11 @@ def ensure_extension( filename, extension ):
 
 
 def check_extension( filename , extension):
-  return True if filename.endswith("."+extension) else False
+  extensions = extension.split('|')
+  for ext in extensions:
+    if filename.endswith("."+ext):
+      return True
+  return False
   
 
 def mkdir_p(path):

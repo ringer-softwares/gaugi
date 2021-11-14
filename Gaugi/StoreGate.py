@@ -41,7 +41,7 @@ class StoreGate( Logger ) :
     self.__dirs       = list()
 
     if restore:
-      objs = self.restore(self.__ile)
+      objs = self.restore(self.__file)
       for name, obj in objs:
         self.__dirs.append(name)
         self.__objects[name]=obj
