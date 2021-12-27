@@ -85,7 +85,7 @@ def expand_folders( pathList, filters = None):
   if len(filters) is 1:
     retList = retList[0]
 
-
+  # put evrything in order
   sorted(retList)
   return retList
 

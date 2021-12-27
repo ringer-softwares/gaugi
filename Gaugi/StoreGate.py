@@ -36,6 +36,7 @@ class StoreGate( Logger ) :
       self.__file = TFile( self.__outputFile, "read")
     else:
       self.__file = TFile( self.__outputFile, "recreate")
+
     self.__currentDir = ""
     self.__objects    = dict()
     self.__dirs       = list()
@@ -71,7 +72,7 @@ class StoreGate( Logger ) :
   #
   def mkdir(self, theDir):
     fullpath = (theDir).replace('//','/')    
-    if not fullpath in self._dirs:
+    if not fullpath in self.__dirs:
       self.__dirs.append( fullpath )
       self.__file.mkdir(fullpath)
       self.__file.cd(fullpath)

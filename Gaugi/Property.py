@@ -2,13 +2,12 @@
 
 __all__ = ["declareProperty", "get_property"]
 
-
+#
+#TODO shoul implement protected and private dynamic members
+#
 def declareProperty( self, kw, name, value, private=False, protected=False):
-    # private
-    attribute = ('__' + name ) if private else name
-    # protected
-    attribute = ('_' + name ) if protected else name
-    if not name in kw:
+    attribute = name
+    if not name in kw.keys():
         setattr(self, attribute, value)
     else:
         setattr(self, attribute, kw[name])
