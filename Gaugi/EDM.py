@@ -7,6 +7,7 @@ from Gaugi import StatusCode
 from Gaugi.macros import *
 
 from ROOT import AddressOf
+import traceback
 
 
 
@@ -97,7 +98,7 @@ class EDM( Logger ):
         tree.SetBranchAddress( varname, AddressOf(holder) )
       MSG_DEBUG( self, "Set %s branch address on %s", varname, tree )
     else:
-      MSG_DEBUG( self, "Already set %s branch address on %s", varname, tree)
+      MSG_WARNING( self, "Already set %s branch address on %s", varname, tree)
 
 
   def retrieve(self, key):
@@ -167,5 +168,8 @@ class EDM( Logger ):
         try:
             self.setBranchAddress( self._tree, branch  , self._event)
             self._branches.append(branch) # hold all branches from the body class
-        except:
+        
+        except Exception as e:
+            traceback.print_exc()
+            print(e)
             MSG_WARNING( self, "It's not possible to set this branche: %s", branch )
