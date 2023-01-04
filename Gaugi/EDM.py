@@ -6,8 +6,9 @@ from Gaugi import EnumStringification
 from Gaugi import StatusCode
 from Gaugi.macros import *
 
-from ROOT import AddressOf
+from cppyy.ll import cast
 import traceback
+import ROOT
 
 
 
@@ -90,12 +91,10 @@ class EDM( Logger ):
     " Set tree branch varname to holder "
     if not tree.GetBranchStatus(varname):
       tree.SetBranchStatus( varname, True )
-      # fix the AddressOf in new ROOT versions we need only one argument
-
-      try:
-        tree.SetBranchAddress( varname, AddressOf(holder, pointername) )
-      except:
-        tree.SetBranchAddress( varname, AddressOf(holder) )
+      if ROOT.gROOT.GetVersion()<'6.22':
+        tree.SetBranchAddress( varname, ROOT.AddressOf(holder, pointername) )
+      else:
+        tree.SetBranchAddress( varname, cast['void*'](ROOT.addressof(holder, pointername)) )
       MSG_DEBUG( self, "Set %s branch address on %s", varname, tree )
     else:
       MSG_WARNING( self, "Already set %s branch address on %s", varname, tree)
