@@ -22,6 +22,7 @@ class TEventLoop( Logger ):
     self._treePath   = get_property( kw, 'treePath'  , None                            )
     self._dataframe  = get_property( kw, 'dataframe' , None                            )
     self._nov        = get_property( kw, 'nov'       , -1                              )
+    self._abort      = get_property( kw, 'abort'     , True                            )
     self._mute_progressbar   = get_property( kw, 'mute_progressbar', False             )
     self._level = LoggingLevel.retrieve( get_property(kw, 'level', LoggingLevel.INFO ) )
     self._name       = name
@@ -122,7 +123,15 @@ class TEventLoop( Logger ):
 
     ### Loop over events
     for entry in progressbar(range(self.get_nov()), prefix= "Looping over entries ", mute=self._mute_progressbar):
-      self.process(entry)
+      
+      try:
+        self.process(entry)
+      except:
+        if self._abort:
+          MSG_FATAL(self, "Abort event %d"%entry)
+        else:
+          MSG_ERROR(self, "Error event %d"%entry)
+
 
     return StatusCode.SUCCESS
 
